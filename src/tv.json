@@ -1,0 +1,26 @@
+[
+    {
+      "id": 1,
+      "marca": "Samsung",
+      "referencia": "Neo QLED 4K QN90C",
+      "modelo": 2022,
+      "color": "negro",
+      "pulgadas": "65"
+    },
+    {
+      "id": 2,
+      "marca": "LG",
+      "referencia": "LG OLED EVO",
+      "modelo": 2022,
+      "color": "gris",
+      "pulgadas": "42"
+    },
+    {
+      "id": 3,
+      "marca": "Sony",
+      "referencia": "Ultra HD Google",
+      "modelo": 2023,
+      "color": "negro",
+      "pulgadas": "55"
+    }
+  ]
