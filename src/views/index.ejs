@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tvs App</title>
+</head>
+<body>
+    <h1>Hola <%= name %>, Bienvenido a nuestra aplicación de televisores</h1>
+    <p>Estos son nuestros televisores: </p>
+    <ul>
+        <% tvs.forEach(tvs => { %>
+            <li><%= tvs %></li>
+
+
+            <% }); %>
+
+    </ul>
+</body>
+</html>

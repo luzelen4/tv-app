@@ -1,112 +1,180 @@
+//Librerias externas
 const express = require('express');
 const fs = require('fs');
-const dataPath = 'tvs.json';
+const {v4: uuidv4} = require('uuid');
 
-const app = express();
+    //Insertar bitácora al listar
+    const moment = require('moment')
+    const time = moment().format('YYYY-MM-DD HH:mm:ss')
+    const log = JSON.parse(fs.readFileSync('access_log.json', 'utf8'))
+
+ //Modulos internas
+ const { readFile, writeFile } = require('./src/files');
+
+ const app = express();
+ const PORT = process.env.PORT || 3000;
+const APP_NAME = process.env.APP_NAME || 'My App';
+ const FILE_NAME = './db/tvs.json'; // cambio
+
+//Middleware
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.set('views', './src/views');
+app.set('view engine', 'ejs') //DEBEMOS CREAR LA CARPETA
+
+app.get('/read-file', (req, res)=>{
+    const data = readFile(FILE_NAME);
+    res.send(data);
+})
+
+//WEB LISTAR TVS
+app.get('/tvs', (req, res) =>{
+    const data = readFile(FILE_NAME);
+    res.render('tvs/index', {tvs : data});
+
+    log.insert_request_dates.push(
+        new_record = {"date": time})
+        fs.writeFileSync('access_log.json', JSON.stringify(log))
+})
+
+//WEB CREAR TVS
+app.get('/tvs/create', (req,res) =>{
+    //Mostrar el formulario
+    res.render('tvs/create');
+})
+
+app.post('/tvs', (req,res) =>{
+    try{
+        //Leer el archivo de tvs
+        const data = readFile(FILE_NAME);
+    
+        //Agregar el nuevo registro
+        const newTv = req.body;
+        newTv.id = uuidv4();
+        console.log(newTv)
+        data.push(newTv); //agrego nuevo elemento
+
+        //Escribir en el archivo
+        writeFile(FILE_NAME, data);
+        res.redirect('/tvs')
+    }catch (error){
+            console.error(error);
+            res.json({message: ' Error al almacenar el tv'});
+        }
+})
+
+//WEB ELIMINAR TVS
+app.post('/tvs/Delete/:id', (req, res) =>{
+    console.log(req.params.id);
+    //GUARDAR ID
+    const id = req.params.id
+    //leer contenido del archivo
+    const cars = readFile(FILE_NAME)
+
+    //BUSCAR EL TV CON EL ID QUE RECIBE
+    const tvIndex = tvs.findIndex(tv => tv.id === id)
+    if(tvIndex < 0){
+        res.status(404).json({'ok': false, message:"tv not found"})
+        return;
+    }
+    //eliminar el tv en la posicion
+    tvs.splice(tvIndex,1);
+    writeFile(FILE_NAME, tvs)
+    res.redirect('/tvs');
+})
 
 
-// Ruta para obtener todos los tvs
-app.get('/tvs', (req, res) => {
-  fs.readFile(dataPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(400).json({ error: 'No se pudo obtener la lista de los tvs.' });
-    }
-    const tvs = JSON.parse(data);
-    res.json(tvs);
-  });
-});
+//API
+//Listar tvs
+app.get('/api/tvs', (req,res) =>{
+    const data = readFile(FILE_NAME);
+    res.json(data);
+})
 
-// Ruta para obtener un tv por id
-app.get('/tvs/:tvId', (req, res) => {
-  const tvId = parseInt(req.params.tvId);
-  fs.readFile(dataPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(400).json({ error: 'No se pudo obtener la información del tv solicitado.' });
-    }
-    const tvs = JSON.parse(data);
-    const tv = tvs.find((s) => s.id === tvId);
-    if (!tv) {
-      return res.status(400).json({ error: 'tv no encontrado.' });
-    }
-    res.json(tv);
-  });
-});
 
-// Ruta para agregar un nuevo tv
-app.post('/tvs', (req, res) => {
-  fs.readFile(dataPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(400).json({ error: 'No se pudo agregar el tv.' });
-    }
-    const tvs = JSON.parse(data);
+//Crear tvs
+app.post('/api/tvs', (req, res) => {
+    try{
+    //Leer el archivo de mascotas
+    const data = readFile(FILE_NAME);
+
+    //Agregar el nuevo carro
     const newTv = req.body;
-    newTv.id = tvs.length + 1;
-    tvs.push(newTv);
+    newTv.id = uuidv4();
+    console.log(newTv)
+    data.push(newTv); //agrego nuevo elemento
 
-    fs.writeFile(dataPath, JSON.stringify(tvs, null, 2), (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(400).json({ error: 'No se pudo agregar el tv.' });
-      }
-      res.status(201).json(newTv);
-    });
-  });
+    //Escribir en el archivo
+    writeFile(FILE_NAME, data);
+    res.json({message: 'El tv fue creado'});
+    }catch (error){
+        console.error(error);
+        res.json({message: ' Error al almacenar el tv'});
+    }
+
 });
 
-// Ruta para actualizar un tv por ID
-app.put('/tvs/:tvId', (req, res) => {
-  const tvIdId = parseInt(req.params.tvId);
-  fs.readFile(dataPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'No se pudo actualizar la información del tv.' });
+//Obtener un solo tv (usamos los dos puntos por que es un path param)
+app.get('/api/tvs/:id', (req, res) =>{
+    console.log(req.params.id);
+    //GUARDAR ID
+    const id = req.params.id
+    //leer contenido del archivo
+    const pets = readFile(FILE_NAME)
+
+    //BUSCAR TV CON EL ID QUE RECIBE
+    const petFound = pets.find(tv => tv.id === id)
+    if(!petFound){
+        res.status(404).json({'ok': false, message:"tv not found"})
+        return;
     }
-    let tvs = JSON.parse(data);
-    const updatedTv = req.body;
-    tvs = tvs.map((tv) =>
-      tv.id === tvId ? { ...tv, ...updatedTv } : tv
-    );
 
-    fs.writeFile(dataPath, JSON.stringify(tv, null, 2), (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'No se pudo actualizar la información del tv.' });
-      }
-      res.json(updatedTv);
-    });
-  });
-});
+    res.json({'ok': true, pet: petFound});
+})
+//ACTUALIZAR UN DATO
+app.put('/api/tvs/:id', (req, res) =>{
+    console.log(req.params.id);
+    //GUARDAR ID
+    const id = req.params.id
+    //leer contenido del archivo
+    const pets = readFile(FILE_NAME)
 
-// Ruta para eliminar un tv por ID
-app.delete('/tvs/:tvId', (req, res) => {
-  const tvId = parseInt(req.params.tvId);
-  fs.readFile(dataPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'No se pudo eliminar el tv.' });
+    //BUSCAR TV CON EL ID QUE RECIBE
+    const petIndex = pets.findIndex(pet => pet.id === id)
+    if(tvIndex < 0){
+        res.status(404).json({'ok': false, message:"tv not found"})
+        return;
     }
-    let tvs = JSON.parse(data);
-    const index = tvs.findIndex((tv) => tv.id === tvId);
-    if (index === -1) {
-      return res.status(404).json({ error: 'tv no encontrado.' });
+    let tv = tvs[petIndex]; //sacar del arreglo
+    tv={...tv, ...req.body}
+    tvs[petIndex] = tv //Poner la mascota en el mismo lugar
+    writeFile(FILE_NAME, pets);
+    //SI LA MASCOTA EXISTE MODIFICAR LOS DATOS Y ALMACENAR NUEVAMENTE
+
+
+    res.json({'ok': true, tv: tv});
+})
+
+//Delete, eliminar un dato
+app.delete('/api/tvs/:id', (req, res) =>{
+    console.log(req.params.id);
+    //GUARDAR ID
+    const id = req.params.id
+    //leer contenido del archivo
+    const tvs = readFile(FILE_NAME)
+
+    //BUSCAR LA MASCOTA CON EL ID QUE RECIBE
+    const tvIndex = tvs.findIndex(tv => tv.id === id)
+    if(tvIndex < 0){
+        res.status(404).json({'ok': false, message:"tv not found"})
+        return;
     }
-    const deletedTv = tvs.splice(index, 1)[0];
+    //eliminar la mascota en la posicion
+    tvs.splice(tvIndex,1);
+    writeFile(FILE_NAME, pets)
+    res.json({'ok': true});
+})
 
-    fs.writeFile(dataPath, JSON.stringify(tvs, null, 2), (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(400 ).json({ error: 'No se pudo eliminar el tv.' });
-      }
-      res.json(deletedTv);
-    });
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor en ejecución en el puerto ${PORT}`);
+app.listen(3000, () => {
+    console.log(`${APP_NAME} está corriendo en http://localhost:${PORT}`);
 });
